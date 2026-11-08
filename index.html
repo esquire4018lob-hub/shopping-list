@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>買い物リスト</title>
+<style>
+body {
+ font-family: sans-serif;
+ background: #f5f7f4;
+ margin: 0;
+ padding: 20px;
+}
+.app {
+ max-width: 450px;
+ margin: auto;
+ background: white;
+ padding: 20px;
+ border-radius: 20px;
+}
+h1 { color: #39804b; }
+.input-area { display: flex; gap: 8px; }
+input {
+ min-width: 0;
+ flex: 1;
+ padding: 12px;
+ font-size: 16px;
+ border: 1px solid #ccc;
+ border-radius: 10px;
+}
+button {
+ padding: 12px;
+ border: none;
+ border-radius: 10px;
+ background: #39804b;
+ color: white; font-size: 16px;
+}
+ul { padding: 0; list-style: none; }
+li {
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ padding: 12px 0;
+ border-bottom: 1px solid #eee;
+}
+li span { flex: 1; overflow-wrap: anywhere; }
+.done { text-decoration: line-through; color: #999; }
+.delete { background: #eee; color: #333; }
+#count { color: #666; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+<h1>買い物リスト</h1>
+<div class="input-area">
+ <input id="itemInput" placeholder="商品A" maxlength="100">
+ <button onclick="addItem()">追加</button>
+</div>
+<p id="count">残り0件</p>
+<ul id="list"></ul>
+<button onclick="clearDone()" class="delete">購入済みを削除</button>
+</div>
+<script>
+const KEY = "shopping-list";
+let items = [];
+try {
+ items = JSON.parse(localStorage.getItem(KEY)) || [];
+ if (!Array.isArray(items)) items = [];
+} catch {
+ items = [];
+}
+function save() {
+ localStorage.setItem(KEY, JSON.stringify(items));
+}
+function addItem() {
+ const input = document.getElementById("itemInput");
+ const name = input.value.trim();
+ if (!name) return;
+ items.push({ name: name, done: false });
+ input.value = "";
+ save();
+ render();
+}
+function toggleItem(index) {
+ items[index].done = !items[index].done;
+ save();
+ render();
+}
+function deleteItem(index) {
+ items.splice(index, 1);
+ save();
+ render();
+}
+function clearDone() {
+ items = items.filter(item => !item.done);
+ save();
+ render();
+}
+function render() {
+ const list = document.getElementById("list");
+ list.innerHTML = "";
+ items.forEach((item, index) => {
+ const li = document.createElement("li");
+ const checkbox = document.createElement("input");
+ checkbox.type = "checkbox";
+ checkbox.checked = item.done;
+ checkbox.onchange = () => toggleItem(index);
+ const name = document.createElement("span");
+ name.textContent = item.name;
+ if (item.done) name.className = "done";
+ const button = document.createElement("button");
+ button.textContent = "削除";
+ button.className = "delete";
+ button.onclick = () => deleteItem(index);
+ li.append(checkbox, name, button);
+ list.appendChild(li);
+ });
+ const remaining = items.filter(item => !item.done).length;
+ document.getElementById("count").textContent =
+ "残り" + remaining + "件";
+}
+document.getElementById("itemInput")
+ .addEventListener("keydown", event => {
+ if (event.key === "Enter") addItem();
+ });
+render();
+</script>
+</body>
